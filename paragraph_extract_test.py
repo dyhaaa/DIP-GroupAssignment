@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
 image_folder = [
     'Converted Paper (8)/001.png',
@@ -12,6 +13,12 @@ image_folder = [
     'Converted Paper (8)/007.png',
     'Converted Paper (8)/008.png',
 ]
+
+save_images = True
+output_dir = 'output'
+
+if save_images:
+    os.makedirs(output_dir, exist_ok=True)
 
 # Load grayscale image and convert to binary (black and white) according to threshold (brightness 200 or less = 0, more than 200 = 255)
 def to_binary(image_path):
@@ -202,7 +209,7 @@ def show_paragraphs(paragraph_images, image_title=""):
     plt.tight_layout()
     plt.show()
 
-# 
+# Store paragraph images in dictionary
 def store_paragraphs_in_dict():
     
     '''
@@ -241,6 +248,14 @@ def store_paragraphs_in_dict():
 
     return image_paragraphs_dict
 
+# Save images (after sorting)
+def save_images_from_dict(image_paragraphs_dict):
+    
+    for image_name, paragraphs in image_paragraphs_dict.items():
+        base = os.path.splitext(os.path.basename(image_name))[0]
+        for i, p in enumerate(paragraphs):
+            cv2.imwrite(os.path.join(output_dir, f"{base}_para_{i:02d}.png"), p)
+
 # Main
 def main():
     
@@ -251,6 +266,10 @@ def main():
              
         print(f"\n{image_name} \n{len(paragraph_images)} paragraphs")
         show_paragraphs(paragraph_images, image_title=image_name)    
+        
+    # Save paragraphs as images
+    if save_images:
+        save_images_from_dict(image_paragraphs_dict)
 
 if __name__ == '__main__':
     main()
