@@ -108,9 +108,7 @@ def segment_paragraphs(column_img, x_start, line_spacing_threshold=40):
             # Save current paragraph
             para_img = column_img[current_para_start:current_para_end, :]
             paragraphs.append({
-                "img": para_img,
-                "x": x_start,
-                "y": current_para_start
+                "img": para_img
             })
             
             # Start new paragraph
@@ -120,9 +118,7 @@ def segment_paragraphs(column_img, x_start, line_spacing_threshold=40):
     # Append last paragraph
     para_img = column_img[current_para_start:current_para_end, :]
     paragraphs.append({
-        "img": para_img,
-        "x": x_start,
-        "y": current_para_start
+        "img": para_img
     })
 
     return paragraphs
@@ -166,9 +162,7 @@ def extract_paragraphs_004(image_path):
     
     # Add table image to list of paragraphs
     all_paragraphs.append({
-        "img": table_img,
-        "x": 140,
-        "y": table_y_start
+        "img": table_img
     })
     
     # Debug
@@ -194,39 +188,69 @@ def extract_paragraphs_004(image_path):
 
 
 # Display paragraphs
-def show_paragraphs(paragraphs, image_title=""):
+def show_paragraphs(paragraph_images, image_title=""):
 
     plt.figure(figsize=(16, 8))
     
-    for i, para in enumerate(paragraphs):
+    for i, para in enumerate(paragraph_images):
         plt.subplot(2, 4, i + 1)
-        plt.imshow(para["img"], cmap='gray')
-        plt.title(f"x={para['x']}, y={para['y']}")
+        plt.imshow(para, cmap='gray')
+        plt.title(f"Paragraph: {i}")
         plt.axis('off')
         
     plt.suptitle(image_title)
     plt.tight_layout()
     plt.show()
 
-# Main
-def main():
+# 
+def store_paragraphs_in_dict():
+    
+    '''
+    image_paragraphs_dict is dictionary of 'image file: paragraph images', eg:
+    {
+    "001.png": [image of paragraph with index 0, image of paragraph with index 1, image of paragraph with index 2, image of paragraph with index 3, image of paragraph with index 4, image of paragraph with index 5],
+    "002.png": [image of paragraph with index 0, ...
+    }
+              
+    So after extracting and storing paragraphs, can be sorted later using the dictionary
+    '''
+    
+    image_paragraphs_dict = {}
+    
 
     # For loop to extract paragraphs for each image in image_folder
     for path in image_folder:
         
-        # Use extract_paragraphSs_004(path) for image 004, else use normal extract_paragraphs(path)
+        # Get just the image filename (eg: '001.png')
+        image_name = path.split('/')[-1]
+        
+        # Use extract_paragraphs_004(path) for image 004, else use normal extract_paragraphs(path)
         if '004.png' in path:
             paragraphs = extract_paragraphs_004(path)
             
         else:
             paragraphs = extract_paragraphs(path)
-            
-        print(f"\n{path} \n{len(paragraphs)} paragraphs")
-        
-        show_paragraphs(paragraphs, image_title=path)
-        
-    # No. of paragraphs should be 6 8 7 8 5 8 8 8 (including tables/images, was counted manually)
+       
 
+        # Store the arrays of paragraph images in the dict
+        paragraph_images = [para['img'].copy() for para in paragraphs]
+        image_paragraphs_dict[image_name] = paragraph_images
+        
+        
+    # No. of paragraphs should be 6 8 7 8 5 8 8 8 (including tables/images, counted manually)
+
+    return image_paragraphs_dict
+
+# Main
+def main():
+    
+    image_paragraphs_dict = store_paragraphs_in_dict()
+
+    # Debug show paragraphs
+    for image_name, paragraph_images in image_paragraphs_dict.items():
+             
+        print(f"\n{image_name} \n{len(paragraph_images)} paragraphs")
+        show_paragraphs(paragraph_images, image_title=image_name)    
 
 if __name__ == '__main__':
     main()
