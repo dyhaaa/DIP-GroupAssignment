@@ -11,20 +11,26 @@ ENDSCREEN_PATH = r"C:\Users\Karl Huzairy\.spyder-py3\Assignment\endscreen.mp4"
 # Output suffix
 OUTPUT_SUFFIX = "_final.mp4"
 
+#Removes the black backgrounds from the Watermarks
 def remove_black_background(img_path, size):
     img = cv2.imread(img_path)
+    #Error Checking for if cant find the watermark
     if img is None:
-        raise FileNotFoundError(f"Could not read image: {img_path}")
+        raise FileNotFoundError(f" Could not Find Watermark: {img_path}")
+    #Resizes the Image to make sure it fits    
     img = cv2.resize(img, size)
+    #Converts Watermarks into a simpler grayscale image
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    #Makes the whole image Transparent by removing all the black background
     _, alpha = cv2.threshold(gray, 10, 255, cv2.THRESH_BINARY)
     b, g, r = cv2.split(img)
     rgba = cv2.merge([b, g, r, alpha])
     return rgba
 
+#Overlays the Watermark into the Video
 def overlay_watermark(frame, watermark):
-    # Convert to float for blending
     frame = frame.astype(float)
+    #Resize watermark to match current frame size
     wm = cv2.resize(watermark, (frame.shape[1], frame.shape[0]))
     
     overlay_color = wm[:, :, :3].astype(float)
@@ -33,31 +39,38 @@ def overlay_watermark(frame, watermark):
     blended = frame * (1 - overlay_alpha) + overlay_color * overlay_alpha
     return blended.astype(np.uint8)
 
+#Applies the Watermark and append the Endscreen to the Video
 def process_video(video_path, watermark1, watermark2, endscreen_path):
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
-        print(f"Failed to open {video_path}")
+        print(f" Failed to open Video: {video_path}")
         return
-
+    
+    #Gets the videos information (size and fps and ect)
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps = cap.get(cv2.CAP_PROP_FPS)
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-
+    
+    #Adds the Final Suffix to the finalised video
     output_path = video_path.replace(".mp4", OUTPUT_SUFFIX)
     out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
-
+    
+    #Ensures the Watermarks have the correct Size and removes the black background
     wm1 = remove_black_background(watermark1, (width, height))
     wm2 = remove_black_background(watermark2, (width, height))
-
+    
+    #Process Bar for the Video. Added this for visualisation
     print(f"🎬 Processing: {video_path}")
     frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     current = 0
-
+    
+    #Runs thru every frame
     while True:
         ret, frame = cap.read()
         if not ret:
             break
+        #Sets the Overlay for both the Watermarks
         frame = overlay_watermark(frame, wm1)
         frame = overlay_watermark(frame, wm2)
         out.write(frame)
@@ -67,7 +80,7 @@ def process_video(video_path, watermark1, watermark2, endscreen_path):
 
     cap.release()
 
-    # Append endscreen
+    #Appends the endscreen
     end_cap = cv2.VideoCapture(endscreen_path)
     if end_cap.isOpened():
         while True:
@@ -78,11 +91,14 @@ def process_video(video_path, watermark1, watermark2, endscreen_path):
         end_cap.release()
 
     out.release()
-    print(f"\nDone: {output_path}")
+    print(f"\n Done: {output_path}")
 
-# Batch process
+#Runs all the videos found in The Folder 
+#Replace video Folder with actual Folder
+#Dont replace Video Files it should work on its own
 video_folder = r"C:\Users\Karl Huzairy\.spyder-py3\Assignment"
 video_files = glob.glob(os.path.join(video_folder, "*.mp4"))
+
 
 for video in video_files:
     if video.endswith(OUTPUT_SUFFIX) or os.path.basename(video) == os.path.basename(ENDSCREEN_PATH):
