@@ -10,14 +10,13 @@ videoPATH = r"street.mp4"
 video = cv2.VideoCapture(videoPATH)
 face_cascade = cv2.CascadeClassifier("face_detector.xml")
 
-def detect_face(img):
-    final_img = img.copy()
-    blur_img = img.copy()
+def blur_face(img):
+    final_img = img.copy() #Clear Frame
+    blur_img = img.copy() #Blur Frame
     rectangle = face_cascade.detectMultiScale(blur_img, scaleFactor=1.2, minNeighbors=5)
-    blur_img = cv2.blur(blur_img, (25, 25))
+    blur_img = cv2.blur(blur_img, (101, 101))
     for (x, y, w, h) in rectangle:
-        print(x, y, w, h)
-        final_img[y:y+h, x:x+w] = blur_img[y:y+h, x:x+w]
+        final_img[y:y+h, x:x+w] = blur_img[y:y+h, x:x+w] #Overlay Blured Frame over Clear Frame on detected area
         pass
     
     return final_img
@@ -36,7 +35,7 @@ while(video.isOpened()):
     # Capture frame-by-frame
     ret, frame = video.read()
     if ret == True:
-        alterFrame = detect_face(frame)
+        alterFrame = blur_face(frame) #Blur Current Frame
         
         # Display the resulting frame
         cv2.imshow('Frame', alterFrame)
