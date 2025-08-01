@@ -15,6 +15,8 @@ image_folder = [
 ]
 
 save_images = True
+
+# Name of folder to save paragraph images
 output_dir = 'output'
 
 if save_images:
@@ -114,9 +116,7 @@ def segment_paragraphs(column_img, x_start, line_spacing_threshold=40):
         else:
             # Save current paragraph
             para_img = column_img[current_para_start:current_para_end, :]
-            paragraphs.append({
-                "img": para_img
-            })
+            paragraphs.append(para_img)
             
             # Start new paragraph
             current_para_start = curr_start
@@ -124,9 +124,7 @@ def segment_paragraphs(column_img, x_start, line_spacing_threshold=40):
 
     # Append last paragraph
     para_img = column_img[current_para_start:current_para_end, :]
-    paragraphs.append({
-        "img": para_img
-    })
+    paragraphs.append(para_img)
 
     return paragraphs
 
@@ -168,9 +166,7 @@ def extract_paragraphs_004(image_path):
     all_paragraphs = []
     
     # Add table image to list of paragraphs
-    all_paragraphs.append({
-        "img": table_img
-    })
+    all_paragraphs.append(table_img)
     
     # Debug
     #plt.imshow(binary, cmap='gray') 
@@ -195,11 +191,11 @@ def extract_paragraphs_004(image_path):
 
 
 # Display paragraphs
-def show_paragraphs(paragraph_images, image_title=""):
+def show_paragraphs(paragraphs, image_title=""):
 
     plt.figure(figsize=(16, 8))
     
-    for i, para in enumerate(paragraph_images):
+    for i, para in enumerate(paragraphs):
         plt.subplot(2, 4, i + 1)
         plt.imshow(para, cmap='gray')
         plt.title(f"Paragraph: {i}")
@@ -209,27 +205,16 @@ def show_paragraphs(paragraph_images, image_title=""):
     plt.tight_layout()
     plt.show()
 
-# Store paragraph images in dictionary
-def store_paragraphs_in_dict():
+# Main
+def main():
     
-    '''
-    image_paragraphs_dict is dictionary of 'image file: paragraph images', eg:
-    {
-    "001.png": [image of paragraph with index 0, image of paragraph with index 1, image of paragraph with index 2, image of paragraph with index 3, image of paragraph with index 4, image of paragraph with index 5],
-    "002.png": [image of paragraph with index 0, ...
-    }
-              
-    So after extracting and storing paragraphs, can be sorted later using the dictionary
-    '''
-    
-    image_paragraphs_dict = {}
-    
-
     # For loop to extract paragraphs for each image in image_folder
     for path in image_folder:
         
         # Get just the image filename (eg: '001.png')
         image_name = path.split('/')[-1]
+        
+        base = os.path.splitext(os.path.basename(image_name))[0]
         
         # Use extract_paragraphs_004(path) for image 004, else use normal extract_paragraphs(path)
         if '004.png' in path:
@@ -237,39 +222,19 @@ def store_paragraphs_in_dict():
             
         else:
             paragraphs = extract_paragraphs(path)
-       
-
-        # Store the arrays of paragraph images in the dict
-        paragraph_images = [para['img'].copy() for para in paragraphs]
-        image_paragraphs_dict[image_name] = paragraph_images
+            
+        print(f"\n{image_name} \n{len(paragraphs)} paragraphs")
         
-        
-    # No. of paragraphs should be 6 8 7 8 5 8 8 8 (including tables/images, counted manually)
-
-    return image_paragraphs_dict
-
-# Save images (after sorting)
-def save_images_from_dict(image_paragraphs_dict):
+        # Show paragraphs
+        show_paragraphs(paragraphs, image_title=image_name) 
     
-    for image_name, paragraphs in image_paragraphs_dict.items():
-        base = os.path.splitext(os.path.basename(image_name))[0]
-        for i, p in enumerate(paragraphs):
-            cv2.imwrite(os.path.join(output_dir, f"{base}_para_{i:02d}.png"), p)
-
-# Main
-def main():
-    
-    image_paragraphs_dict = store_paragraphs_in_dict()
-
-    # Debug show paragraphs
-    for image_name, paragraph_images in image_paragraphs_dict.items():
-             
-        print(f"\n{image_name} \n{len(paragraph_images)} paragraphs")
-        show_paragraphs(paragraph_images, image_title=image_name)    
+        # Save paragraphs as images
+        if save_images:
+            for i, para in enumerate(paragraphs):
+                cv2.imwrite(os.path.join(output_dir, f"{base}_para_{i:02d}.png"), para)
         
-    # Save paragraphs as images
-    if save_images:
-        save_images_from_dict(image_paragraphs_dict)
+        # No. of paragraphs should be 6 8 7 8 5 8 8 8 (including tables/images, counted manually)
+            
 
 if __name__ == '__main__':
     main()
