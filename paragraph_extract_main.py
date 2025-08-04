@@ -17,10 +17,8 @@ image_folder = [
 save_images = True
 
 # Name of folder to save paragraph images
-output_dir = 'output'
+output_main = 'Extracted Paragraphs'
 
-if save_images:
-    os.makedirs(output_dir, exist_ok=True)
 
 # Load grayscale image and convert to binary (black and white) according to threshold (brightness 200 or less = 0, more than 200 = 255)
 def to_binary(image_path):
@@ -65,11 +63,35 @@ def find_regions(hist, min_width=1):
             
     return regions
 
+# Show histograms for debug
+def show_histogram(image, hist, orientation='horizontal', title='Histogram'):
+    
+    plt.figure(figsize=(10, 4))
+    
+    # Show original image
+    plt.subplot(1, 2, 1)
+    plt.imshow(image, cmap='gray')
+    plt.title('Image')
+    plt.axis('off')
+    
+    # Show histogram
+    plt.subplot(1, 2, 2)
+    plt.plot(hist)
+    plt.title(f'{title}')
+    plt.xlabel('Column / Row Index')
+    plt.ylabel('Black Pixel Count')
+        
+    plt.tight_layout()
+    plt.show()
+
 # Detect and extract column regions using vertical histogram to get boundaries of columns
 def segment_columns(binary):
     
     # Vertical histogram to detect columns
     v_hist = vertical_histogram(binary)
+    
+    # Debug
+    #show_histogram(binary, v_hist, orientation='vertical', title='Vertical Histogram (Columns)')
     
     # Get column boundaries based on vertical histogram
     column_bounds = find_regions(v_hist, min_width=10)
@@ -92,6 +114,9 @@ def segment_paragraphs(column_img, x_start, line_spacing_threshold=40):
     
     # Horizontal histogram to detect lines
     h_hist = horizontal_histogram(column_img)
+    
+    # Debug
+    #show_histogram(column_img, h_hist, orientation='horizontal', title='Horizontal Histogram (Paragraphs)')
     
     # Get line boundaries based on horizontal histogram
     line_bounds = find_regions(h_hist, min_width=5)
@@ -198,7 +223,7 @@ def show_paragraphs(paragraphs, image_title=""):
     for i, para in enumerate(paragraphs):
         plt.subplot(2, 4, i + 1)
         plt.imshow(para, cmap='gray')
-        plt.title(f"Paragraph: {i}")
+        plt.title(f"Paragraph: {i+1}")
         plt.axis('off')
         
     plt.suptitle(image_title)
@@ -225,13 +250,20 @@ def main():
             
         print(f"\n{image_name} \n{len(paragraphs)} paragraphs")
         
-        # Show paragraphs
+        # Show paragraphs for debug
         show_paragraphs(paragraphs, image_title=image_name) 
     
         # Save paragraphs as images
         if save_images:
+            
+            os.makedirs(output_main, exist_ok=True)
+            
+            # Make subfolder for each image
+            output_sub = os.path.join(output_main, base)
+            os.makedirs(output_sub, exist_ok=True)
+            
             for i, para in enumerate(paragraphs):
-                cv2.imwrite(os.path.join(output_dir, f"{base}_para_{i:02d}.png"), para)
+                cv2.imwrite(os.path.join(output_sub, f"{base}_paragraph_{i+1}.png"), para)
         
         # No. of paragraphs should be 6 8 7 8 5 8 8 8 (including tables/images, counted manually)
             
